@@ -5,13 +5,13 @@ import android.view.LayoutInflater;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class LinearListTemp extends LinearLayout {
+public class TemperatureLineLayout extends LinearLayout {
 
     private TextView txtTempName;
     private TextView txtTempValue;
 
 
-    public LinearListTemp(Context context) {
+    public TemperatureLineLayout(Context context) {
         super(context);
         init(context);
     }

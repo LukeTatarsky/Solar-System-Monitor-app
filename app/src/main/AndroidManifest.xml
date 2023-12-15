@@ -16,6 +16,9 @@
             android:name=".Graphing"
             android:exported="false" />
         <activity
+            android:name=".GraphSettings"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
             android:exported="true">
             <intent-filter>

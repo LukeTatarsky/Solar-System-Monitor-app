@@ -19,7 +19,12 @@ public class XAxisFormatter extends ValueFormatter {
         Instant instant = Instant.ofEpochSecond((long) value);
         LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
 
-
+        return localDateTime.format(formatter);
+    }
+    public String StringFromFloat(float value) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("hh:mm");
+        Instant instant = Instant.ofEpochSecond((long) value);
+        LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
         return localDateTime.format(formatter);
     }
 }

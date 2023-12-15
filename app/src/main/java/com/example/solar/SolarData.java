@@ -19,7 +19,9 @@ public class SolarData {
     public SolarData() {
     }
 
-    public SolarData(LocalDateTime date, float glycolRoof, float glycolIn, float glycolOutTank, float glycolOutHE, float solarTankHigh, float solarTankMid, float solarTankLow, float boilerTankMid, float boilerTankOut, float solarTankOut) {
+    public SolarData(LocalDateTime date, float glycolRoof, float glycolIn, float glycolOutTank,
+                     float glycolOutHE, float solarTankHigh, float solarTankMid, float solarTankLow,
+                     float boilerTankMid, float boilerTankOut, float solarTankOut) {
         this.date = date;
         this.glycolRoof = glycolRoof;
         this.glycolIn = glycolIn;

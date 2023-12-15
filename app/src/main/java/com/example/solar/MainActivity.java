@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
                                 int i = 0;
                                 for (String value : lineArrayList){
                                     if (i > 0) {
-                                        LinearListTemp lineLayout = new LinearListTemp(this);
+                                        TemperatureLineLayout lineLayout = new TemperatureLineLayout(this);
                                         lineLayout.setName(SENSOR_NAMES[i]);
                                         lineLayout.setValue(value);
                                         linearLayout.addView(lineLayout);
