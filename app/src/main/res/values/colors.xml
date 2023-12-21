@@ -6,4 +6,7 @@
     <color name="orange">#DA3400</color>
     <color name="green">#68AA00</color>
     <color name="purple">#F08243BA</color>
+    <color name="hot">#FFFF0000</color>
+    <color name="warm">#3DC80A</color>
+    <color name="cold">#002AAA</color>
 </resources>

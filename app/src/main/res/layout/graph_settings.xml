@@ -1,14 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:tag="1">
+
+    <SeekBar
+        android:id="@+id/seek_max_temp"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:layout_width="298dp"
+        android:layout_height="37dp"
+        android:layout_marginStart="80dp"
+        android:layout_marginBottom="32dp"
+        android:max="100"
+        android:min="40"
+        android:progress="60"
+        android:scaleY="1"
+        app:layout_constraintBottom_toTopOf="@+id/txt_hours_static"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/txt_value_max_temp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="13dp"
+        android:layout_marginEnd="40dp"
+        android:text="1"
+        app:layout_constraintEnd_toStartOf="@+id/seek_max_temp"
+        app:layout_constraintTop_toBottomOf="@+id/txt_hours_static2" />
+
+    <TextView
+        android:id="@+id/txt_hours_static2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginBottom="8dp"
+        android:text="Maximum Bar Temp"
+        android:textSize="18sp"
+        app:layout_constraintBottom_toTopOf="@+id/seek_max_temp"
+        app:layout_constraintStart_toStartOf="parent" />
 
     <Button
         android:id="@+id/btn_Save"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="55dp"
         android:layout_marginBottom="36dp"
         android:text="Save"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -18,7 +53,7 @@
     <Button
         android:id="@+id/btn_Cancel"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="55dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="36dp"
@@ -27,84 +62,29 @@
         app:layout_constraintEnd_toStartOf="@+id/btn_Save"
         app:layout_constraintStart_toStartOf="parent" />
 
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/chipGroup"
-        android:layout_width="50dp"
-        android:layout_height="147dp"
-        android:layout_marginTop="38dp"
-        android:layout_marginEnd="38dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/switch1">
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="3dp"
-            android:layout_marginTop="47dp"
-            android:checkable="true"
-            app:checkedIcon="@android:drawable/checkbox_on_background"
-            app:checkedIconVisible="true"
-            app:chipIcon="@android:drawable/checkbox_off_background" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/chip2"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="52dp"
-            android:layout_marginEnd="110dp"
-            android:checkable="true"
-            app:checkedIcon="@android:drawable/checkbox_on_background"
-            app:checkedIconVisible="true"
-            app:chipIcon="@android:drawable/checkbox_off_background"
-            tools:text="sdf" />
-    </com.google.android.material.chip.ChipGroup>
-
-    <Switch
-        android:id="@+id/switch1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="52dp"
-        android:layout_marginBottom="38dp"
-        android:minHeight="48dp"
-        android:text="Switch"
-        app:layout_constraintBottom_toTopOf="@+id/chipGroup"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <CheckBox
-        android:id="@+id/checkBox"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="88dp"
-        android:layout_marginTop="44dp"
-        android:text="CheckBox"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
     <SeekBar
         android:id="@+id/seek_hours"
         style="@style/Widget.AppCompat.SeekBar.Discrete"
         android:layout_width="298dp"
         android:layout_height="37dp"
-        android:layout_marginStart="42dp"
-        android:layout_marginEnd="42dp"
+        android:layout_marginStart="80dp"
         android:max="24"
         android:min="1"
         android:progress="5"
         android:scaleY="1"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.723" />
 
     <TextView
         android:id="@+id/txt_hours_static"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="34dp"
-        android:layout_marginBottom="9dp"
-        android:text="Hours"
+        android:layout_marginStart="32dp"
+        android:layout_marginBottom="8dp"
+        android:text="Graph Hours"
+        android:textSize="18sp"
         app:layout_constraintBottom_toTopOf="@+id/seek_hours"
         app:layout_constraintStart_toStartOf="parent" />
 
@@ -112,9 +92,91 @@
         android:id="@+id/txt_hours_seek"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="18dp"
-        android:layout_marginBottom="10dp"
+        android:layout_marginTop="17dp"
+        android:layout_marginEnd="40dp"
         android:text="1"
-        app:layout_constraintBottom_toTopOf="@+id/seek_hours"
-        app:layout_constraintStart_toEndOf="@+id/txt_hours_static" />
+        app:layout_constraintEnd_toStartOf="@+id/seek_hours"
+        app:layout_constraintTop_toBottomOf="@+id/txt_hours_static" />
+
+    <ScrollView
+        android:id="@+id/scrlViewSensors"
+        android:layout_width="147dp"
+        android:layout_height="248dp"
+        android:layout_marginStart="22dp"
+        android:layout_marginTop="24dp"
+        android:visibility="invisible"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:id="@+id/linLayoutSensors"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <Spinner
+        android:id="@+id/spinner"
+        android:layout_width="123dp"
+        android:layout_height="21dp"
+        android:layout_marginTop="56dp"
+        android:layout_marginEnd="44dp"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/txtTxtSize"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="26dp"
+        android:layout_marginEnd="75dp"
+        android:text="TextSizeOffset"
+        android:visibility="invisible"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Switch
+        android:id="@+id/sw_weeks"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginStart="38dp"
+        android:layout_marginTop="19dp"
+        android:text="Show Weeks"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/seek_hours" />
+
+    <RadioGroup
+        android:id="@+id/radioGroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="140dp"
+        android:layout_marginBottom="43dp"
+        app:layout_constraintBottom_toTopOf="@+id/btn_Save"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <RadioButton
+            android:id="@+id/rdio_avg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:tag="0"
+            android:text="Avg" />
+
+        <RadioButton
+            android:id="@+id/rdio_max"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:tag="1"
+            android:text="Max" />
+
+        <RadioButton
+            android:id="@+id/rdio_min"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:tag="2"
+            android:text="Min" />
+    </RadioGroup>
+
 </androidx.constraintlayout.widget.ConstraintLayout>

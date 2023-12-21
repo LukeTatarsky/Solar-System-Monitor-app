@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Solar</string>
+    <string name="graphing_weeks">Graphing Last Week</string>
+    <string name="graph_hours">Graph Hours</string>
+    <string name="no_data_found">No data found. Wait 30 s and update.</string>
+    <string name="graph">Graph</string>
+    <string name="settings">Settings</string>
+    <string name="update">Update</string>
+    <string name="loading">Loading...</string>
+    <string name="temp_list">temperatures</string>
 </resources>

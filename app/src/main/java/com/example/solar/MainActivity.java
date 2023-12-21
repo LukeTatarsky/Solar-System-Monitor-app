@@ -3,19 +3,20 @@ package com.example.solar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
-
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
-
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -23,28 +24,33 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MainActivity extends AppCompatActivity {
+//    public static final String TAG = "MainActivity";
     private TextView time;
     private LinearLayout linearLayout;
-    private FirebaseFirestore db = FirebaseFirestore.getInstance();
-    private CollectionReference collRef = db.collection("test");
-    private String[] SENSOR_NAMES = {"Date","Glycol Roof",
+    private int max_bar_temp;
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private final CollectionReference collRef = db.collection("test");
+    private final String[] SENSOR_NAMES = {"Date","Glycol Roof",
             "Glycol In","Glycol Out Tank","Glycol Out HE",
-            "Solar Tank High","Solar Tank Mid","Solar Tank Low",
-            "Boiler Tank Mid","Boiler Tank Out","Solar Tank Out"};
+            "S Tank High","S Tank Mid","S Tank Low",
+            "Boiler Mid","Boiler Out","S Tank Out"};
+    private final AtomicReference<LocalDateTime> currentHourUTC = new AtomicReference<>(LocalDateTime.now(ZoneId.of("UTC"))
+            .withMinute(0)
+            .withSecond(0)
+            .withNano(0));
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        time = findViewById(R.id.textView1);
+        time = findViewById(R.id.textView);
         linearLayout = findViewById(R.id.layout_temperatures);
-        // get current time to query the database
-        AtomicReference<LocalDateTime> currentHourUTC = new AtomicReference<>(LocalDateTime.now(ZoneId.of("UTC"))
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0));
 
-        // initial load
+        // get current time to query the database
+
+        // initial load. gets the preferences and updates the temps
+        update_prefs();
         updateTemperatures(currentHourUTC.get());
+
 
         // when update button is clicked
         Button btnUpdate = findViewById(R.id.btn_update);
@@ -61,8 +67,39 @@ public class MainActivity extends AppCompatActivity {
             // intent.putExtra("solarData", "value");
             startActivity(intent);
         });
+        Button btnSettings = findViewById(R.id.btnSettingsMain);
+        btnSettings.setOnClickListener(view -> {
+            Intent intent = new Intent(this, Settings.class);
+            startActivity(intent);
+        });
+
     }
 
+    @Override
+    protected void onRestart() {
+        super.onRestart();
+//        Log.d(TAG, "on restart");
+        update_prefs();
+        currentHourUTC.set(LocalDateTime.now(ZoneId.of("UTC"))
+                .withMinute(0)
+                .withSecond(0)
+                .withNano(0));
+        updateTemperatures(currentHourUTC.get());
+    }
+    private void update_prefs(){
+        SharedPreferences prefs_shared = getSharedPreferences(Settings.SHARED_PREFS, MODE_PRIVATE);
+        max_bar_temp = prefs_shared.getInt(Settings.KEY_MAX_TEMP, 75);
+        // update the Bar maximums
+        for (int i = 0; i < linearLayout.getChildCount(); i++) {
+            View child = linearLayout.getChildAt(i);
+            if (child instanceof TemperatureLine) {
+                ((TemperatureLine) child).setMaxBarTemp(max_bar_temp);
+            }else if (child instanceof TemperatureLineMax) {
+                ((TemperatureLineMax) child).setMaxBarTemp(max_bar_temp);
+            }
+        }
+    }
+    /** @noinspection ConstantValue*/
     private void updateTemperatures(LocalDateTime currentHourUTC){
         String fieldName = "hour";
         Date fsDate = Date.from(currentHourUTC.atZone(ZoneId.of("UTC")).toInstant());
@@ -72,31 +109,56 @@ public class MainActivity extends AppCompatActivity {
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
-                        // The query was successful
                         QuerySnapshot querySnapshot = task.getResult();
                         if (querySnapshot != null) {
                             linearLayout.removeAllViews();
-                            // Iterate through the matching documents
+                            DecimalFormat df = new DecimalFormat("0.0");
                             for (QueryDocumentSnapshot document : querySnapshot) {
                                 List<String> lines = (List<String>) document.get("lines");
+                                Double glycol_in_max = (Double) document.get("glycol_in_max");
+                                Double glycol_roof_max = (Double) document.get("glycol_roof_max");
+
                                 // get the last line
+                                assert lines != null;
                                 String[] lineArray = lines.get(lines.size()-1).split(",");
                                 List<String> lineArrayList = new ArrayList<>(Arrays.asList(lineArray));
-                                time.setText(lineArrayList.get(0));
-                                int i = 0;
-                                for (String value : lineArrayList){
-                                    if (i > 0) {
-                                        TemperatureLineLayout lineLayout = new TemperatureLineLayout(this);
+
+                                DateTimeFormatter formatterInput = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                                DateTimeFormatter formatterOutput = DateTimeFormatter.ofPattern("E, MMM d    h:mm:ss a");
+                                LocalDateTime timeLocal = LocalDateTime.parse(lineArrayList.get(0), formatterInput);
+                                time.setText(timeLocal.format(formatterOutput));
+                                // Process the last line
+                                for (int i = 1; i < lineArrayList.size() ; i++){
+                                    if (i <= 2 ) {
+                                        TemperatureLineMax lineLayout = new TemperatureLineMax(this, max_bar_temp);
                                         lineLayout.setName(SENSOR_NAMES[i]);
-                                        lineLayout.setValue(value);
+//                                        lineLayout.setNumBold(true);
+                                        Double tempDbl = Double.parseDouble(lineArrayList.get(i));
+//                                        lineLayout.setValue(value);
+                                        lineLayout.setCurrValue(df.format(tempDbl));
+                                        lineLayout.setProgress(tempDbl);
+                                        lineLayout.setMaxBarTemp(max_bar_temp);
+                                        if (i == 1)
+                                            lineLayout.setMaxValue(df.format(glycol_roof_max));
+                                        else if (i == 2)
+                                            lineLayout.setMaxValue(df.format(glycol_in_max));
+                                        linearLayout.addView(lineLayout);
+                                    } else if (i > 2 && i != 4) {
+                                        TemperatureLine lineLayout = new TemperatureLine(this, max_bar_temp);
+                                        lineLayout.setName(SENSOR_NAMES[i]);
+//                                        lineLayout.setNumBold(true);
+                                        Double tempDbl = Double.parseDouble(lineArrayList.get(i));
+//                                        lineLayout.setValue(value);
+                                        lineLayout.setValue(df.format(tempDbl));
+                                        lineLayout.setProgress(tempDbl);
+                                        lineLayout.setMaxBarTemp(max_bar_temp);
                                         linearLayout.addView(lineLayout);
                                     }
-                                    i++;
                                 }
                             }
                         }
-                    } else {
-                        Log.d("DEBUG--", "Task Failed");
+                    }else{
+                        time.setText(R.string.no_data_found);
                     }
                 });
     }
