@@ -7,7 +7,6 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -40,6 +39,8 @@ public class Graphing extends AppCompatActivity {
     private static final String KEY_HOURS = "graph_hours";
     public static final String SHARED_PREFS = "sharedPrefs";
     public static final String KEY_SHOW_WEEKS = "show_weeks";
+    public static final String KEY_SHOW_BOILER_OUT = "show_boiler";
+    public static final String KEY_SHOW_BOILER_MID = "show_boiler_mid";
     public static final String KEY_AVG_MAX_MIN = "avg_max_min";
     private SharedPreferences prefs_shared;
     AtomicReference<LocalDateTime> currentHourUTC;
@@ -48,20 +49,23 @@ public class Graphing extends AppCompatActivity {
     private List<SolarData> solarDataArray;
     private TextView txtDataGlycol;
     private TextView txtDataST;
-
     private List<Entry> entries_high;
     private List<Entry> entries_mid;
     private List<Entry> entries_low;
     private List<Entry> entries_boiler;
+    private List<Entry> entries_boiler_out;
     private List<Entry> entries_glycol_roof;
     private List<Entry> entries_glycol_in;
     private List<Entry> entries_glycol_out_st;
     private List<Entry> entries_glycol_out_he;
     private MyXAxisFormatter xAxisTimeFormatter;
+    // 0 for avg, 1 for max, 2 for min
     private int selected_avg_max_min;
 
     int prefs_Hours;
     boolean showingWeeks;
+    boolean showingBoilerOut;
+    boolean showingBoilerMid;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,6 +83,8 @@ public class Graphing extends AppCompatActivity {
         prefs_shared = getSharedPreferences(SHARED_PREFS, MODE_PRIVATE);
         prefs_Hours = prefs_shared.getInt(KEY_HOURS, 1);
         showingWeeks = prefs_shared.getBoolean(KEY_SHOW_WEEKS, false);
+        showingBoilerOut = prefs_shared.getBoolean(KEY_SHOW_BOILER_OUT, false);
+        showingBoilerMid = prefs_shared.getBoolean(KEY_SHOW_BOILER_MID, true);
         selected_avg_max_min = prefs_shared.getInt(KEY_AVG_MAX_MIN, 0);
         /*
         After you have an instance of your chart, you can create data and add it to the chart.
@@ -93,6 +99,7 @@ public class Graphing extends AppCompatActivity {
         entries_mid = new ArrayList<>();
         entries_low = new ArrayList<>();
         entries_boiler = new ArrayList<>();
+        entries_boiler_out = new ArrayList<>();
         // second chart
         entries_glycol_roof = new ArrayList<>();
         entries_glycol_in = new ArrayList<>();
@@ -105,11 +112,17 @@ public class Graphing extends AppCompatActivity {
                 .withNano(0));
 
         // either show hourly chart or week chart
+
         if (showingWeeks){
+            showingBoilerOut = false;
             getTempsWeeks(currentHourUTC.get());
         }else {
+            if (!showingBoilerMid){
+                showingBoilerOut = false;
+            }
             getTempsHours(currentHourUTC.get());
         }
+
 
         btn_settings.setOnClickListener(view -> showSettings());
         btn_reset_zoom.setOnClickListener(view -> {
@@ -154,10 +167,16 @@ public class Graphing extends AppCompatActivity {
     @Override
     protected void onRestart() {
         super.onRestart();
-        Log.d(TAG, "on restart");
+//        Log.d(TAG, "on restart");
         prefs_Hours = prefs_shared.getInt(KEY_HOURS, 1);
-        showingWeeks = prefs_shared.getBoolean(KEY_SHOW_WEEKS, false);
         selected_avg_max_min = prefs_shared.getInt(KEY_AVG_MAX_MIN, 0);
+        showingWeeks = prefs_shared.getBoolean(KEY_SHOW_WEEKS, false);
+        showingBoilerMid = prefs_shared.getBoolean(KEY_SHOW_BOILER_MID, true);
+        if (showingWeeks)
+            showingBoilerOut = false;
+        else
+            showingBoilerOut = prefs_shared.getBoolean(KEY_SHOW_BOILER_OUT, false);
+
         updateCharts();
     }
 
@@ -167,14 +186,15 @@ public class Graphing extends AppCompatActivity {
         entries_mid.clear();
         entries_low.clear();
         entries_boiler.clear();
+        entries_boiler_out.clear();
         entries_glycol_roof.clear();
         entries_glycol_in.clear();
         entries_glycol_out_st.clear();
         entries_glycol_out_he.clear();
 
-        if (showingWeeks){
+        if (showingWeeks) {
             getTempsWeeks(currentHourUTC.get());
-        }else {
+        } else {
             getTempsHours(currentHourUTC.get());
         }
     }
@@ -190,7 +210,7 @@ public class Graphing extends AppCompatActivity {
         dataSet.setColor(ContextCompat.getColor(getApplicationContext(), color));
         dataSet.setDrawCircles(false);
         dataSet.setDrawValues(false);
-        dataSet.setLineWidth(3);
+        dataSet.setLineWidth(3f);
         dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         dataSet.setCubicIntensity(0.2f);
         return dataSet;
@@ -199,7 +219,7 @@ public class Graphing extends AppCompatActivity {
     /** @noinspection SameParameterValue, SameParameterValue, SameParameterValue */
     private void setChartFormat(LineChart chart, String description, float desc_text_size, float legend_text_size, float axis_text_size, float legend_spacing){
         chart.setVisibleXRangeMinimum(600); // seconds
-        chart.setVisibleYRangeMinimum(0.9f, YAxis.AxisDependency.LEFT);
+        chart.setVisibleYRangeMinimum(1.1f, YAxis.AxisDependency.LEFT);
         Description desc_glyc = new Description();
         desc_glyc.setText(description);
         desc_glyc.setTextSize(desc_text_size);
@@ -223,31 +243,35 @@ public class Graphing extends AppCompatActivity {
         CollectionReference collRef = db.collection("weeks");
         String fieldNameWeek = "_week_number";
         String fieldNameYear = "_year";
-        int weekOfYear = currentHourUTC.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear());
+        int weekOfYear = currentHourUTC.get(WeekFields.of(Locale.getDefault()).weekOfWeekBasedYear()) - 1 ; // -1 to show atleast one week
         int year = currentHourUTC.getYear();
-        collRef.whereEqualTo(fieldNameWeek, weekOfYear)
-                .whereEqualTo(fieldNameYear, year)
+//        Log.d(TAG, "solarReading creation failed " + weekOfYear + " " + year);
+        collRef.whereEqualTo(fieldNameYear, year)
+                .whereGreaterThanOrEqualTo(fieldNameWeek, weekOfYear)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful()) {
                         QuerySnapshot querySnapshot = task.getResult();
+//                        Log.d(TAG, "solarReading creation failed " +querySnapshot.getDocuments().size());
                         if (querySnapshot != null) {
+
                             for (QueryDocumentSnapshot document : querySnapshot) {
                                 List<String> lines = (List<String>) document.get("lines");
+
                                 assert lines != null;
                                 SolarData solarReading;
                                 for (String line : lines) {
                                     String[] lineReading = line.split(",");
-
                                     // creating data object. try/catch to stop parse error on "None"
                                     // convert each line (String) into floats and date
                                     try {
-                                        // 0 for avg, 1 for max, 2 for min
+
                                         solarReading = new SolarData(lineReading, selected_avg_max_min);
                                         solarDataArray.add(solarReading);
+//                                        Log.d(TAG, solarReading.toString());
                                     } catch (Exception e) {
                                         // this needs work
-                                        Log.d(TAG, "solarReading creation failed");
+//                                        Log.d(TAG, "solarReading creation failed");
                                     }
                                 }
                             }
@@ -255,7 +279,7 @@ public class Graphing extends AppCompatActivity {
                         // Setup the charts once data had been processed
                         setupCharts();
                     } else {
-                        Log.d(TAG, "Task Failed");
+//                        Log.d(TAG, "Task Failed");
                     }
                 });
     }
@@ -310,7 +334,7 @@ public class Graphing extends AppCompatActivity {
                         // Setup the charts once data had been processed
                         setupCharts();
                     } else {
-                        Log.d(TAG, "Task Failed");
+//                        Log.d(TAG, "Task Failed");
                     }
                 });
     }
@@ -321,7 +345,11 @@ public class Graphing extends AppCompatActivity {
             entries_high.add(new Entry(seconds, solarReading.getSolarTankHigh()));
             entries_mid.add(new Entry(seconds, solarReading.getSolarTankMid()));
             entries_low.add(new Entry(seconds, solarReading.getSolarTankLow()));
-            entries_boiler.add(new Entry(seconds, solarReading.getBoilerTankMid()));
+
+            if (showingBoilerOut)
+                entries_boiler_out.add(new Entry(seconds, solarReading.getBoilerTankOut()));
+            if (showingBoilerMid)
+                entries_boiler.add(new Entry(seconds, solarReading.getBoilerTankMid()));
 
             entries_glycol_roof.add(new Entry(seconds, solarReading.getGlycolRoof()));
             entries_glycol_in.add(new Entry(seconds, solarReading.getGlycolIn()));
@@ -334,22 +362,29 @@ public class Graphing extends AppCompatActivity {
         LineDataSet dataSet_mid = setupLineDataSet(entries_mid, "Mid", R.color.orange);
         LineDataSet dataSet_low = setupLineDataSet(entries_low, "Low", R.color.green);
         LineDataSet dataSet_boiler = setupLineDataSet(entries_boiler, "Boiler Mid", R.color.purple);
+        LineDataSet dataSet_boiler_out = setupLineDataSet(entries_boiler_out, "Boiler Out", R.color.purple_light);
 
         LineDataSet dataSet_glycol_roof = setupLineDataSet(entries_glycol_roof, "In Roof", R.color.red);
         LineDataSet dataSet_glycol_in = setupLineDataSet(entries_glycol_in, "In", R.color.orange);
         LineDataSet dataSet_glycol_out_tank = setupLineDataSet(entries_glycol_out_st, "Out Tank", R.color.green);
-        LineDataSet dataSet_glycol_out_he = setupLineDataSet(entries_glycol_out_he, "Out HE", R.color.black);
+        LineDataSet dataSet_glycol_out_he = setupLineDataSet(entries_glycol_out_he, "Out HE", R.color.blue);
 
         // Create LineData object and set to LineChart
         LineData lineData_glycol = new LineData(dataSet_glycol_out_he, dataSet_glycol_out_tank, dataSet_glycol_roof, dataSet_glycol_in);
         chart_glycol.setData(lineData_glycol);
 
-        LineData lineData = new LineData(dataSet_high, dataSet_mid, dataSet_low, dataSet_boiler);
+        LineData lineData = new LineData(dataSet_high, dataSet_mid, dataSet_low);
+        if (showingBoilerOut){
+            lineData.addDataSet(dataSet_boiler_out);
+        }
+        if (showingBoilerMid){
+            lineData.addDataSet(dataSet_boiler);
+        }
         chart_solar_tank.setData(lineData);
 
         // set chart settings for glycol chart
         setChartFormat(chart_glycol, "Glycol", 15, 14, 14, 28);
-        setChartFormat(chart_solar_tank, "Tank", 15, 14, 14, 26);
+        setChartFormat(chart_solar_tank, "Tank", 15, 14, 14, 24);
 
         // Refresh (redraw) charts
         chart_solar_tank.invalidate();

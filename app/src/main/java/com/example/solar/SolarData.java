@@ -19,9 +19,9 @@ public class SolarData {
     private final float boilerTankMid;
     private final float boilerTankOut;
     private final float solarTankOut;
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public SolarData(String[] line) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         this.date = LocalDateTime.parse(line[0], formatter);
         this.glycolRoof = Float.parseFloat(line[1]);
         this.glycolIn = Float.parseFloat(line[2]);
@@ -36,18 +36,17 @@ public class SolarData {
     }
 
     public SolarData(String[] line, int avg_max_min) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd H:mm:ss.SSSSSS");
-        this.date = LocalDateTime.parse(line[1], formatter);
-        this.glycolRoof = Float.parseFloat(line[2 + avg_max_min]);
-        this.glycolIn = Float.parseFloat(line[5 + avg_max_min]);
-        this.glycolOutTank = Float.parseFloat(line[8 + avg_max_min]);
-        this.glycolOutHE = Float.parseFloat(line[11 + avg_max_min]);
-        this.solarTankHigh = Float.parseFloat(line[14 + avg_max_min]);
-        this.solarTankMid = Float.parseFloat(line[17 + avg_max_min]);
-        this.solarTankLow = Float.parseFloat(line[20 + avg_max_min]);
-        this.boilerTankMid = Float.parseFloat(line[23 + avg_max_min]);
-        this.boilerTankOut = Float.parseFloat(line[26 + avg_max_min]);
-        this.solarTankOut = Float.parseFloat(line[29 + avg_max_min]);
+        this.date = LocalDateTime.parse(line[0], formatter);
+        this.glycolRoof = Float.parseFloat(line[1 + avg_max_min]);
+        this.glycolIn = Float.parseFloat(line[4 + avg_max_min]);
+        this.glycolOutTank = Float.parseFloat(line[7 + avg_max_min]);
+        this.glycolOutHE = Float.parseFloat(line[10 + avg_max_min]);
+        this.solarTankHigh = Float.parseFloat(line[13 + avg_max_min]);
+        this.solarTankMid = Float.parseFloat(line[16 + avg_max_min]);
+        this.solarTankLow = Float.parseFloat(line[19 + avg_max_min]);
+        this.boilerTankMid = Float.parseFloat(line[22 + avg_max_min]);
+        this.boilerTankOut = Float.parseFloat(line[25 + avg_max_min]);
+        this.solarTankOut = Float.parseFloat(line[28 + avg_max_min]);
     }
 
     public LocalDateTime getDate() {return date;}
@@ -90,6 +89,9 @@ public class SolarData {
 
     public float getBoilerTankMid() {
         return boilerTankMid;
+    }
+    public float getBoilerTankOut() {
+        return boilerTankOut;
     }
 
 

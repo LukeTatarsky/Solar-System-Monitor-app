@@ -1,7 +1,7 @@
 package com.example.solar;
 
-import androidx.appcompat.app.AppCompatActivity;
 
+import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -9,10 +9,12 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.messaging.FirebaseMessaging;
 import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -24,7 +26,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class MainActivity extends AppCompatActivity {
-//    public static final String TAG = "MainActivity";
+    private static final String TAG = "MainActivity";
     private TextView time;
     private LinearLayout linearLayout;
     private int max_bar_temp;
@@ -72,6 +74,22 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, Settings.class);
             startActivity(intent);
         });
+
+        // subscribe to notifications
+        FirebaseMessaging.getInstance().subscribeToTopic("hot")
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        String msg = "Subscribe failed";
+                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                    }
+                });
+        FirebaseMessaging.getInstance().subscribeToTopic("notify")
+                .addOnCompleteListener(task -> {
+                    if (!task.isSuccessful()) {
+                        String msg = "Subscribe failed";
+                        Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
+                    }
+                });
 
     }
 

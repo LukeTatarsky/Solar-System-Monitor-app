@@ -30,7 +30,7 @@ public class MyXAxisFormatter extends ValueFormatter {
         Instant instant = Instant.ofEpochSecond((long) value);
         LocalDateTime localDateTime = LocalDateTime.ofInstant(instant, ZoneId.of("UTC"));
         if (showingWeeks) {
-            return localDateTime.format(DateTimeFormatter.ofPattern("E, h a"));
+            return localDateTime.minusDays(1).format(DateTimeFormatter.ofPattern("E, h a"));
         } else{
             return localDateTime.format(DateTimeFormatter.ofPattern("h:mm a"));
         }
