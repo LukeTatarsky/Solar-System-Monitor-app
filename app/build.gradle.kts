@@ -34,7 +34,7 @@ android {
 
 
 dependencies {
-//    implementation ("com.google.firebase:firebase-messaging:20.2.4")
+    implementation ("com.google.firebase:firebase-messaging:20.2.4")
 
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.10.0")

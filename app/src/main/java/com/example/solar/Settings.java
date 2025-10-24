@@ -38,7 +38,7 @@ public class Settings extends AppCompatActivity {
     private int selected_avg_max_min;
     int selectedHours;
     int selectedMaxTemp;
-    int MAX_HOURS = 12;
+    int MAX_HOURS = 24;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

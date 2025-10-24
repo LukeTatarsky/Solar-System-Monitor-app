@@ -1,17 +1,24 @@
 package com.example.solar;
 
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.messaging.FirebaseMessaging;
@@ -32,6 +39,8 @@ public class MainActivity extends AppCompatActivity {
     private int max_bar_temp;
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private final CollectionReference collRef = db.collection("test");
+    private DocumentReference documentReference = null;
+    private ListenerRegistration listenerRegistration = null;
     private final String[] SENSOR_NAMES = {"Date","Glycol Roof",
             "Glycol In","Glycol Out Tank","Glycol Out HE",
             "S Tank High","S Tank Mid","S Tank Low",
@@ -83,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, msg, Toast.LENGTH_LONG).show();
                     }
                 });
-        FirebaseMessaging.getInstance().subscribeToTopic("notify")
+        FirebaseMessaging.getInstance().subscribeToTopic("debug")
                 .addOnCompleteListener(task -> {
                     if (!task.isSuccessful()) {
                         String msg = "Subscribe failed";
@@ -103,6 +112,82 @@ public class MainActivity extends AppCompatActivity {
                 .withSecond(0)
                 .withNano(0));
         updateTemperatures(currentHourUTC.get());
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerListener();
+
+    }
+    void registerListener(){
+        if (documentReference != null) {
+            listenerRegistration = documentReference.addSnapshotListener((docSnapshot, e) -> {
+                if (e != null) {
+                    Log.d(TAG, "Error in registerListener");
+                    return;
+                }
+
+                if (docSnapshot != null && docSnapshot.exists()) {
+
+                    linearLayout.removeAllViews();
+                    DecimalFormat df = new DecimalFormat("0.0");
+                    List<String> lines = (List<String>) docSnapshot.get("lines");
+                    Double glycol_in_max = (Double) docSnapshot.get("glycol_in_max");
+                    Double glycol_roof_max = (Double) docSnapshot.get("glycol_roof_max");
+                    assert lines != null;
+                    String[] lineArray = lines.get(lines.size()-1).split(",");
+                    List<String> lineArrayList = new ArrayList<>(Arrays.asList(lineArray));
+
+                    DateTimeFormatter formatterInput = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                    DateTimeFormatter formatterOutput = DateTimeFormatter.ofPattern("E, MMM d    h:mm:ss a");
+                    LocalDateTime timeLocal = LocalDateTime.parse(lineArrayList.get(0), formatterInput);
+                    time.setText(timeLocal.format(formatterOutput));
+                    // Process the last line
+                    for (int i = 1; i < lineArrayList.size() ; i++){
+                        if (i <= 2 ) {
+                            TemperatureLineMax lineLayout = new TemperatureLineMax(this, max_bar_temp);
+                            lineLayout.setName(SENSOR_NAMES[i]);
+//                                        lineLayout.setNumBold(true);
+                            Double tempDbl = Double.parseDouble(lineArrayList.get(i));
+//                                        lineLayout.setValue(value);
+                            lineLayout.setCurrValue(df.format(tempDbl));
+                            lineLayout.setProgress(tempDbl);
+                            lineLayout.setMaxBarTemp(max_bar_temp);
+                            if (i == 1)
+                                lineLayout.setMaxValue(df.format(glycol_roof_max));
+                            else if (i == 2)
+                                lineLayout.setMaxValue(df.format(glycol_in_max));
+                            linearLayout.addView(lineLayout);
+                        } else if (i > 2 && i != 4) {
+                            TemperatureLine lineLayout = new TemperatureLine(this, max_bar_temp);
+                            lineLayout.setName(SENSOR_NAMES[i]);
+//                                        lineLayout.setNumBold(true);
+                            Double tempDbl = Double.parseDouble(lineArrayList.get(i));
+//                                        lineLayout.setValue(value);
+                            lineLayout.setValue(df.format(tempDbl));
+                            lineLayout.setProgress(tempDbl);
+                            lineLayout.setMaxBarTemp(max_bar_temp);
+                            linearLayout.addView(lineLayout);
+                            }
+                        }
+                }
+            });
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (listenerRegistration != null) {
+            listenerRegistration.remove();
+        }
+    }
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (listenerRegistration != null) {
+            listenerRegistration.remove();
+        }
     }
     private void update_prefs(){
         SharedPreferences prefs_shared = getSharedPreferences(Settings.SHARED_PREFS, MODE_PRIVATE);
@@ -135,7 +220,7 @@ public class MainActivity extends AppCompatActivity {
                                 List<String> lines = (List<String>) document.get("lines");
                                 Double glycol_in_max = (Double) document.get("glycol_in_max");
                                 Double glycol_roof_max = (Double) document.get("glycol_roof_max");
-
+                                documentReference = document.getReference();
                                 // get the last line
                                 assert lines != null;
                                 String[] lineArray = lines.get(lines.size()-1).split(",");
@@ -174,10 +259,12 @@ public class MainActivity extends AppCompatActivity {
                                     }
                                 }
                             }
+                            registerListener();
                         }
                     }else{
                         time.setText(R.string.no_data_found);
                     }
                 });
+
     }
 }
